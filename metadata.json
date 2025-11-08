@@ -1,0 +1,5 @@
+{
+  "name": "UDash Campus Delivery",
+  "description": "A campus food delivery platform for UMass Amherst, connecting students with UDashers for quick Grab & Go meals from various dining halls. This demo showcases the customer and dasher experiences with mock data.",
+  "requestFramePermissions": []
+}

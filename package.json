@@ -1,0 +1,17 @@
+{
+  "name": "udash-backend",
+  "version": "1.0.0",
+  "description": "Scraping backend for UDash app",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "AI Studio",
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  }
+}
