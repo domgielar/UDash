@@ -1,3 +1,4 @@
+
 import express from 'express';
 import cors from 'cors';
 import * as cheerio from "cheerio";
@@ -27,92 +28,120 @@ const mockPrice = () => {
     return parseFloat((Math.random() * (12.99 - 7.99) + 7.99).toFixed(2));
 };
 
-// The scraping endpoint
+// The scraping endpoint with retry logic
 app.get('/grabngo-menu', async (req, res) => {
-    const { date } = req.query;
-    if (!date) {
-        return res.status(400).json({ error: 'A date query parameter is required.' });
+    const { date: initialDate } = req.query;
+    if (!initialDate || !/^\d{4}-\d{2}-\d{2}$/.test(initialDate)) {
+        return res.status(400).json({ error: 'A valid date query parameter (YYYY-MM-DD) is required.' });
     }
-    const url = 'https://umassdining.com/locations-menus/grab-n-go';
-    console.log(`Scraping started for date: ${date} from ${url}`);
 
     try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const html = await response.text();
-        const $ = cheerio.load(html);
+        let currentDate = new Date(initialDate + 'T12:00:00Z'); // Use noon UTC to avoid timezone shifts
+        const maxRetries = 5; // Look up to 5 weekdays ahead
+        let weekdaysChecked = 0;
+        let foundMenuData = null;
 
-        // Check if the menu is closed (UMass Dining shows a specific message)
-        if ($('.view-empty').length > 0) {
-            console.log('No menu available. Grab & Go is likely closed.');
-            return res.json({
-                date,
-                message: 'Grab & Go is currently closed. No menu available.',
-                locations: [],
-            });
-        }
-        
-        const locations = [];
-        
-        $('h2.node__title').each((i, el) => {
-            const titleText = $(el).text().trim();
-            if (titleText.startsWith('Grab & Go at')) {
-                const locationName = titleText.replace('Grab & Go at', '').trim();
-                
-                const locationMenu = {
-                    name: locationName,
-                    items: [],
-                };
-                
-                // Find the container for menu items associated with this h2
-                const menuContainer = $(el).next('.view-food-grab-and-go').find('.view-content');
+        console.log(`Scraping requested for date: ${initialDate}`);
 
-                menuContainer.find('.views-row').each((j, itemEl) => {
-                    const name = $(itemEl).find('h3').text().trim();
-                    const description = $(itemEl).find('.field--name-field-description-menu .field__item').text().trim() || 'No description available.';
+        while (weekdaysChecked < maxRetries) {
+            const dayOfWeek = currentDate.getUTCDay(); // 0 = Sunday, 6 = Saturday
+            const currentDateString = currentDate.toISOString().split('T')[0];
 
-                    if(name) {
-                        locationMenu.items.push({
-                            name,
-                            description,
-                            category: inferCategory(name),
-                            price: mockPrice(),
-                            image: `https://picsum.photos/seed/${name.replace(/\s+/g, '-')}/400`
-                        });
-                    }
-                });
-
-                if (locationMenu.items.length > 0) {
-                    locations.push(locationMenu);
-                }
+            // Skip weekends
+            if (dayOfWeek === 0 || dayOfWeek === 6) {
+                console.log(`Skipping weekend: ${currentDateString}`);
+                currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+                continue;
             }
-        });
+            
+            weekdaysChecked++;
+
+            // Format date for the URL: MM/DD/YYYY
+            const month = (currentDate.getUTCMonth() + 1).toString().padStart(2, '0');
+            const day = currentDate.getUTCDate().toString().padStart(2, '0');
+            const year = currentDate.getUTCFullYear();
+            const dateForUrl = `${month}/${day}/${year}`;
+            
+            const url = `https://umassdining.com/food-menus?tid=3&date[value][date]=${dateForUrl}`;
+
+            console.log(`Attempt #${weekdaysChecked}: Checking for menu on ${currentDateString} at ${url}`);
+            
+            const response = await fetch(url);
+            if (!response.ok) {
+                console.warn(`HTTP error for ${currentDateString}! Status: ${response.status}`);
+                currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+                continue; // Try next day
+            }
+            const html = await response.text();
+            const $ = cheerio.load(html);
+
+            // Check if the menu is empty/closed
+            if ($('.view-empty').length > 0 || html.includes("no menu items were found")) {
+                console.log(`No menu content found for ${currentDateString}.`);
+                currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+                continue; // Move to the next day
+            }
+
+            const locations = [];
+            $('h2').each((i, el) => {
+                const titleText = $(el).text().trim();
+                if (titleText.startsWith('Grab & Go at')) {
+                    const locationName = titleText.replace('Grab & Go at', '').trim();
+                    const locationMenu = { name: locationName, items: [] };
+                    
+                    const menuContainer = $(el).next('.view-food-grab-and-go').find('.view-content');
+                    menuContainer.find('.views-row').each((j, itemEl) => {
+                        const name = $(itemEl).find('h3').text().trim();
+                        const description = $(itemEl).find('.field--name-field-description-menu .field__item').text().trim() || 'No description available.';
+                        if (name) {
+                            locationMenu.items.push({
+                                name,
+                                description,
+                                category: inferCategory(name),
+                                price: mockPrice(),
+                                image: `https://picsum.photos/seed/${name.replace(/\s+/g, '-')}/400`
+                            });
+                        }
+                    });
+
+                    if (locationMenu.items.length > 0) {
+                        locations.push(locationMenu);
+                    }
+                }
+            });
+
+            if (locations.length > 0) {
+                console.log(`Scraping success! Found menu for date: ${currentDateString}`);
+                foundMenuData = {
+                    date: currentDateString,
+                    locations,
+                };
+                break; // Exit the loop
+            } else {
+                console.log(`Parsed page but found no menu items for ${currentDateString}.`);
+                currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+            }
+        }
         
-        if (locations.length === 0) {
-             console.log('No menu items found after parsing. Assuming closed.');
-             return res.json({
-                date,
-                message: 'Grab & Go is currently closed. No menu available.',
+        if (foundMenuData) {
+            // isFutureMenu is true if the menu we found is for a different date than originally requested.
+            const isFutureMenu = foundMenuData.date !== initialDate;
+            res.json({
+                ...foundMenuData,
+                isFutureMenu,
+            });
+        } else {
+            console.log(`Could not find a menu within 5 weekdays of ${initialDate}.`);
+            res.status(404).json({
+                date: initialDate,
+                isFutureMenu: true,
                 locations: [],
+                message: "No upcoming Grab & Go menus are available.",
             });
         }
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const targetDate = new Date(`${date}T00:00:00`);
-        const isFutureMenu = targetDate > today;
-
-        console.log('Scraping success!');
-        res.json({
-            date,
-            isFutureMenu,
-            locations,
-        });
 
     } catch (error) {
-        console.error('Scraping failed:', error);
+        console.error('Scraping failed catastrophically:', error);
         res.status(500).json({ error: 'Failed to fetch or parse menu.' });
     }
 });
@@ -121,5 +150,5 @@ app.listen(PORT, () => {
     console.log(`UDash scraper API listening on port ${PORT}`);
 });
 
-// For serverless deployment (e.g., Vercel)
+// For serverless deployment
 export default app;

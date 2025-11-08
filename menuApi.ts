@@ -36,7 +36,7 @@ export const fetchLatestMenu = async (): Promise<ScrapedMenu> => {
 
     // TODO: Replace this URL with your actual deployed backend endpoint.
     // Example: https://udash-api.onrender.com/grabngo-menu
-    const API_ENDPOINT = `https://<your-backend-endpoint>/grabngo-menu?date=${dateString}`;
+    const API_ENDPOINT = `https://udash-e7ux.onrender.com/grabngo-menu?date=${dateString}`;
     
     // --- REAL API FETCH ---
     // This is now active. It will fail until you deploy the backend and update the URL above.
