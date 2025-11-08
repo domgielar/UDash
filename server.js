@@ -37,6 +37,15 @@ app.get('/grabngo-menu', async (req, res) => {
 
     try {
         let currentDate = new Date(initialDate + 'T12:00:00Z'); // Use noon UTC to avoid timezone shifts
+
+        // If the requested date falls on a weekend, jump to the next Monday automatically
+        const day = currentDate.getUTCDay();
+        if (day === 6) { // Saturday
+            currentDate.setUTCDate(currentDate.getUTCDate() + 2);
+        } else if (day === 0) { // Sunday
+            currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+        }
+
         const maxRetries = 5; // Look up to 5 weekdays ahead
         let weekdaysChecked = 0;
         let foundMenuData = null;
