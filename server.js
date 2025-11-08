@@ -66,12 +66,10 @@ app.get('/grabngo-menu', async (req, res) => {
             weekdaysChecked++;
 
             // Format date for the URL: MM/DD/YYYY
-            const month = (currentDate.getUTCMonth() + 1).toString().padStart(2, '0');
-            const day = currentDate.getUTCDate().toString().padStart(2, '0');
-            const year = currentDate.getUTCFullYear();
-            const dateForUrl = `${month}/${day}/${year}`;
-            
-            const url = `https://umassdining.com/food-menus?tid=3&date[value][date]=${dateForUrl}`;
+            // Always scrape the current Grab & Go menu page
+            const url = `https://umassdining.com/locations-menus/grab-n-go`;
+
+            console.log(`Fetching Grab & Go menu from: ${url}`);
 
             console.log(`Attempt #${weekdaysChecked}: Checking for menu on ${currentDateString} at ${url}`);
             
