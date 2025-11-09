@@ -59,3 +59,24 @@ export interface Order {
   status: OrderStatus;
   createdAt: number; // timestamp
 }
+
+// Type for the scraped menu data returned from backend
+export interface ScrapedMenu {
+  date: string;
+  locations: Array<{
+    name: string;
+    items: Array<{
+      id?: string;
+      name: string;
+      description?: string;
+      category: string;
+      mealPeriod?: string;
+      price: number;
+      calories?: string;
+      image?: string;
+    }>;
+  }>;
+  isFutureMenu: boolean;
+  source?: 'scraped' | 'mock';
+  message?: string;
+}
