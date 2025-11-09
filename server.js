@@ -4,11 +4,44 @@ import cors from 'cors';
 import * as cheerio from "cheerio";
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
+
+// CORS configuration for production
+const allowedOrigins = [
+  'http://localhost:3000', // Local development
+  'http://localhost:3001', // Local development
+  'http://localhost:3002', // Local development
+  'http://localhost:3003', // Local development
+  'http://localhost:3004', // Local development
+  'http://localhost:3005', // Local development
+  'http://localhost:3006', // Local development
+  'http://localhost:3007', // Local development
+  'http://localhost:3008', // Local development
+  'http://localhost:3009', // Local development
+  // Add your Render frontend URL here (replace with your actual frontend URL)
+  'https://udash-yw1z.onrender.com',
+];
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or Postman)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
+
+// Health check endpoint (platforms need this!)
+app.get('/healthz', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
 
 // Helper function to infer category from item name
 const inferCategory = (name) => {
@@ -344,9 +377,23 @@ app.get('/order/:orderId', (req, res) => {
     });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`UDash scraper API listening on port ${PORT}`);
 });
 
-// For serverless deployment
-export default app;
+// Graceful shutdown on SIGTERM (Railway/Render sends this signal)
+process.on('SIGTERM', () => {
+    console.log('SIGTERM received, shutting down gracefully...');
+    server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
+    });
+});
+
+process.on('SIGINT', () => {
+    console.log('SIGINT received, shutting down gracefully...');
+    server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
+    });
+});

@@ -3,14 +3,34 @@ import React from 'react';
 import { MenuItem } from '../types';
 import { PlusCircle } from 'lucide-react';
 
+const isMenuArray = (value: unknown): value is MenuItem[] => {
+  if (!Array.isArray(value)) return false;
+
+  return value.every(item => {
+    if (!item || typeof item !== 'object') return false;
+    const typedItem = item as Partial<MenuItem>;
+
+    return (
+      typeof typedItem.id === 'string' ||
+      typeof typedItem.id === 'number' // Allow both in case backend returns numeric IDs
+    ) && typeof typedItem.name === 'string' &&
+      typeof typedItem.category === 'string' &&
+      typeof typedItem.price === 'number';
+  });
+};
+
 interface MenuListProps {
   menu: MenuItem[];
   onAddToCart: (item: MenuItem) => void;
 }
 
 const MenuList: React.FC<MenuListProps> = ({ menu, onAddToCart }) => {
+  if (!isMenuArray(menu) || menu.length === 0) {
+    return <div className="text-center text-gray-500">No menu items available</div>;
+  }
+
   // FIX: Explicitly type the accumulator `acc` to ensure `categorizedMenu` has the correct type.
-  const categorizedMenu = menu.reduce((acc: Record<string, MenuItem[]>, item) => {
+  const categorizedMenu = (menu as MenuItem[]).reduce((acc: Record<string, MenuItem[]>, item) => {
     if (!acc[item.category]) {
       acc[item.category] = [];
     }
