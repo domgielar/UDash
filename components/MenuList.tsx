@@ -9,8 +9,13 @@ interface MenuListProps {
 }
 
 const MenuList: React.FC<MenuListProps> = ({ menu, onAddToCart }) => {
+  // FIX: Type check menu array before reducing
+  if (!Array.isArray(menu) || menu.length === 0) {
+    return <div className="text-center text-gray-500">No menu items available</div>;
+  }
+
   // FIX: Explicitly type the accumulator `acc` to ensure `categorizedMenu` has the correct type.
-  const categorizedMenu = menu.reduce((acc: Record<string, MenuItem[]>, item) => {
+  const categorizedMenu = (menu as MenuItem[]).reduce((acc: Record<string, MenuItem[]>, item) => {
     if (!acc[item.category]) {
       acc[item.category] = [];
     }
