@@ -22,9 +22,42 @@ const inferCategory = (name) => {
     return 'Misc';
 };
 
-// Helper to generate a mock price
-const mockPrice = () => {
-    return parseFloat((Math.random() * (12.99 - 7.99) + 7.99).toFixed(2));
+// Helper to get realistic price based on item category (UMass grab-n-go pricing)
+// Small items (snacks, drinks, sides): $0.99–$1.99
+// Medium (soups, pastries, desserts): $2.49–$3.49
+// Full entrées / bowls / meals: $3.99–$4.49
+const getPriceByCategory = (category) => {
+    if (!category) return 1.00;
+    
+    const categoryStr = category.toLowerCase();
+    
+    // Full meals ($3.99-$4.49)
+    const fullMealKeywords = ['entree', 'grill', 'pasta', 'international', 'bowl', 'wrap', 'sandwich', 'sushi', 'fajita', 'chicken', 'beef', 'pork', 'fish', 'seafood'];
+    if (fullMealKeywords.some(keyword => categoryStr.includes(keyword))) {
+        return 1.00;
+    }
+    
+    // Medium items ($2.49-$3.49)
+    const mediumKeywords = ['salad', 'soup', 'snack', 'pastry', 'dessert', 'muffin', 'cookie', 'brownie', 'cake'];
+    if (mediumKeywords.some(keyword => categoryStr.includes(keyword))) {
+        return 0.50;
+    }
+    
+    // Small items ($0.99-$1.99)
+    const smallKeywords = ['beverage', 'drink', 'juice', 'coffee', 'tea', 'milk', 'water', 'starch', 'vegetable', 'side', 'sauce', 'condiment', 'fruit'];
+    if (smallKeywords.some(keyword => categoryStr.includes(keyword))) {
+        return 0.25;
+    }
+    
+    // Default: Medium price
+    return 0.50;
+};
+
+// Calculate complexity weight for delivery fee (used in calculate-delivery-fee endpoint)
+const getComplexityWeight = (price) => {
+    if (price < 2) return 0.00;      // Small items: no weight
+    if (price < 4) return 0.10;      // Medium items: +$0.10
+    return 0.25;                      // Full meals: +$0.25
 };
 
 // The scraping endpoint - now handles real menu pages
@@ -115,7 +148,7 @@ app.get('/grabngo-menu', async (req, res) => {
                                     description: '',
                                     category: sectionCategory,
                                     mealPeriod: mealPeriod,
-                                    price: mockPrice(),
+                                    price: getPriceByCategory(sectionCategory),
                                     calories: calories || 'N/A',
                                     image: `https://picsum.photos/seed/${dishName.replace(/\s+/g, '-')}/400`
                                 });
@@ -161,11 +194,11 @@ app.get('/grabngo-menu', async (req, res) => {
             const mockLocations = diningHalls.map(hall => ({
                 name: hall.name,
                 items: [
-                    { name: 'Grilled Chicken Breast', category: 'Grill Station', price: mockPrice(), image: 'https://picsum.photos/seed/chicken/400' },
-                    { name: 'Vegetable Stir Fry', category: 'International', price: mockPrice(), image: 'https://picsum.photos/seed/stirfry/400' },
-                    { name: 'Baked Ziti', category: 'Pasta Bar', price: mockPrice(), image: 'https://picsum.photos/seed/ziti/400' },
-                    { name: 'Roasted Sweet Potato', category: 'Starches', price: mockPrice(), image: 'https://picsum.photos/seed/potato/400' },
-                    { name: 'Caesar Salad', category: 'Salad Bar', price: mockPrice(), image: 'https://picsum.photos/seed/salad/400' },
+                    { name: 'Grilled Chicken Breast', category: 'Grill Station', price: 8.99, image: 'https://picsum.photos/seed/chicken/400' },
+                    { name: 'Vegetable Stir Fry', category: 'International', price: 9.49, image: 'https://picsum.photos/seed/stirfry/400' },
+                    { name: 'Baked Ziti', category: 'Pasta Bar', price: 8.49, image: 'https://picsum.photos/seed/ziti/400' },
+                    { name: 'Roasted Sweet Potato', category: 'Starches', price: 3.99, image: 'https://picsum.photos/seed/potato/400' },
+                    { name: 'Caesar Salad', category: 'Salad Bar', price: 6.99, image: 'https://picsum.photos/seed/salad/400' },
                 ]
             }));
 
@@ -195,34 +228,28 @@ app.post('/calculate-delivery-fee', (req, res) => {
 
     try {
         const BASE_FEE = 2.50;
-        const ITEM_ADDON = 0.25;
-        const COMPLEX_ITEM_ADDON = 0.50;
         const DISTANCE_ADDON = 0.50; // Per 0.25 miles
 
-        // Count items and complexity
+        // Count items and calculate complexity weight
         let totalItems = 0;
-        let complexItemCount = 0;
+        let complexityWeightTotal = 0;
 
         items.forEach(item => {
             totalItems += item.quantity || 1;
             
-            // Determine complexity based on category
-            const complexCategories = ['Entrees', 'Pasta Bar', 'Grill Station', 'International', 'Bowl', 'Wrap'];
-            if (complexCategories.some(cat => item.category?.includes(cat))) {
-                complexItemCount += (item.quantity || 1);
-            }
+            // Get price from item or use category default
+            const price = item.price || getPriceByCategory(item.category);
+            
+            // Calculate complexity weight for each item
+            const weight = getComplexityWeight(price);
+            complexityWeightTotal += (item.quantity || 1) * weight;
         });
 
         // Calculate base fee
         let deliveryFee = BASE_FEE;
 
-        // Add for items beyond 3
-        if (totalItems > 3) {
-            deliveryFee += (totalItems - 3) * ITEM_ADDON;
-        }
-
-        // Add for complex items
-        deliveryFee += complexItemCount * COMPLEX_ITEM_ADDON;
+        // Add complexity weight charges
+        deliveryFee += complexityWeightTotal;
 
         // Add for distance
         const distanceAddons = Math.ceil((distance || 0.5) / 0.25);
@@ -234,13 +261,12 @@ app.post('/calculate-delivery-fee', (req, res) => {
         res.json({
             baseFee: BASE_FEE,
             itemCount: totalItems,
-            complexItems: complexItemCount,
+            complexityWeight: complexityWeightTotal.toFixed(2),
             distance: distance || 0.5,
             deliveryFee: deliveryFee,
             breakdown: {
                 baseFee: BASE_FEE,
-                itemAddOn: Math.max(0, (totalItems - 3) * ITEM_ADDON),
-                complexityAddOn: complexItemCount * COMPLEX_ITEM_ADDON,
+                complexityAddOn: parseFloat(complexityWeightTotal.toFixed(2)),
                 distanceAddOn: distanceAddons * DISTANCE_ADDON
             }
         });

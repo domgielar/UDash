@@ -36,6 +36,10 @@ const Cart: React.FC<CartProps> = ({ cart, onAddToCart, onRemoveFromCart, onPlac
   // Calculate delivery fee when checkout is opened or cart changes
   useEffect(() => {
     if (showCheckout && cart.length > 0) {
+      // Request location when checkout is opened
+      if (!location) {
+        requestLocation();
+      }
       calculateDeliveryFeeFromAPI();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -83,14 +87,17 @@ const Cart: React.FC<CartProps> = ({ cart, onAddToCart, onRemoveFromCart, onPlac
       setError('Please enter your email');
       return;
     }
-    if (!deliveryAddress.trim()) {
-      setError('Please enter your delivery address');
+    if (!location) {
+      setError('Unable to get your location. Please enable location services.');
       return;
     }
     if (cart.length === 0) {
       setError('Your cart is empty');
       return;
     }
+
+    // Use geolocation coordinates as delivery address
+    const geoAddress = `Lat: ${location.lat.toFixed(4)}, Lon: ${location.lng.toFixed(4)}`;
 
     setIsCalculating(true);
     setError('');
@@ -112,7 +119,7 @@ const Cart: React.FC<CartProps> = ({ cart, onAddToCart, onRemoveFromCart, onPlac
           deliveryFee,
           subtotal,
           total: total,
-          deliveryAddress,
+          deliveryAddress: geoAddress,
           dinerName,
           dinerEmail,
           fromLocation: diningHall.name
@@ -229,6 +236,11 @@ const Cart: React.FC<CartProps> = ({ cart, onAddToCart, onRemoveFromCart, onPlac
           )}
 
           <div className="space-y-3 text-sm">
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-2">
+              <p className="text-xs text-blue-600 font-semibold">📍 Pickup Location</p>
+              <p className="text-sm font-semibold text-blue-900">{diningHall.name}</p>
+            </div>
+            
             <input
               type="text"
               placeholder="Your Name"
@@ -243,13 +255,15 @@ const Cart: React.FC<CartProps> = ({ cart, onAddToCart, onRemoveFromCart, onPlac
               onChange={(e) => setDinerEmail(e.target.value)}
               className="w-full p-2 border rounded-md"
             />
-            <textarea
-              placeholder="Delivery Address (e.g., 123 Main St, Dorm Room 456)"
-              value={deliveryAddress}
-              onChange={(e) => setDeliveryAddress(e.target.value)}
-              className="w-full p-2 border rounded-md"
-              rows={2}
-            />
+            
+            <div className="bg-green-50 border border-green-200 rounded-md p-2">
+              <p className="text-xs text-green-600 font-semibold">📍 Your Delivery Location</p>
+              {location ? (
+                <p className="text-sm font-semibold text-green-900">✓ Location confirmed</p>
+              ) : (
+                <p className="text-sm text-red-600">⚠️ Waiting for location access...</p>
+              )}
+            </div>
           </div>
 
           {isCalculating ? (
@@ -281,7 +295,7 @@ const Cart: React.FC<CartProps> = ({ cart, onAddToCart, onRemoveFromCart, onPlac
 
           <button
             onClick={handlePlaceOrder}
-            disabled={isCalculating || !dinerName || !dinerEmail || !deliveryAddress}
+            disabled={isCalculating || !dinerName || !dinerEmail || !location}
             className="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 transition-colors disabled:bg-gray-400 flex items-center justify-center gap-2"
           >
             <CreditCard size={20}/>
