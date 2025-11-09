@@ -32,11 +32,11 @@ export interface CartItem {
 }
 
 export enum OrderStatus {
-    PENDING = "Order Placed",
-    ACCEPTED = "Dasher Assigned",
-    AT_HALL = "Arrived at Dining Hall",
-    IN_LINE = "In Line for Food",
-    PICKED_UP = "On The Way",
+    PENDING = "Order",
+    ACCEPTED = "Dasher",
+    AT_HALL = "Arrived",
+    IN_LINE = "In",
+    PICKED_UP = "On",
     DELIVERED = "Delivered"
 }
 

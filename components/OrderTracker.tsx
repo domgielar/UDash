@@ -13,6 +13,16 @@ interface OrderTrackerProps {
 const OrderTracker: React.FC<OrderTrackerProps> = ({ order, userRole, updateOrderStatus }) => {
   const currentStatusIndex = ORDER_STATUS_FLOW.indexOf(order.status);
   
+  // Status label mapping for cleaner display
+  const statusLabels: Record<OrderStatus, string> = {
+    [OrderStatus.PENDING]: "Order",
+    [OrderStatus.ACCEPTED]: "Dasher Confirmed",
+    [OrderStatus.AT_HALL]: "Arrived at DC",
+    [OrderStatus.IN_LINE]: "In Line",
+    [OrderStatus.PICKED_UP]: "On the Way",
+    [OrderStatus.DELIVERED]: "Delivered"
+  };
+  
   const dasherActions: Partial<Record<OrderStatus, { nextStatus: OrderStatus, buttonText: string }>> = {
     [OrderStatus.ACCEPTED]: { nextStatus: OrderStatus.AT_HALL, buttonText: "I've Arrived at Dining Hall" },
     [OrderStatus.AT_HALL]: { nextStatus: OrderStatus.IN_LINE, buttonText: "I'm in Line" },
@@ -50,12 +60,36 @@ const OrderTracker: React.FC<OrderTrackerProps> = ({ order, userRole, updateOrde
        <ul className="text-xs text-gray-500 flex justify-between mb-6">
         {ORDER_STATUS_FLOW.map((status, index) => (
             <li key={status} className={`w-1/6 text-center ${index <= currentStatusIndex ? 'font-bold text-gray-700' : ''}`}>
-                {status.split(' ')[0]}
+                {statusLabels[status]}
             </li>
         ))}
       </ul>
 
-       {userRole === 'DASHER' && order.status === OrderStatus.PICKED_UP && (
+      {/* Status descriptions - Only show for customers */}
+      {userRole === 'CUSTOMER' && (
+      <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-4">
+        {order.status === OrderStatus.PENDING && (
+          <p className="text-sm text-blue-900">⏳ <strong>Order Confirmed:</strong> Your order is confirmed and a dasher will be assigned shortly.</p>
+        )}
+        {order.status === OrderStatus.ACCEPTED && userRole === 'CUSTOMER' && (
+          <p className="text-sm text-blue-900">✨ <strong>Dasher Assigned:</strong> A dasher has been assigned to your order.</p>
+        )}
+        {order.status === OrderStatus.AT_HALL && (
+          <p className="text-sm text-blue-900">� <strong>Dasher Arriving:</strong> Your dasher has arrived at the dining hall and is picking up your order.</p>
+        )}
+        {order.status === OrderStatus.IN_LINE && (
+          <p className="text-sm text-blue-900">📍 <strong>In Line:</strong> Your dasher is currently in line at the dining hall, picking up your order.</p>
+        )}
+        {order.status === OrderStatus.PICKED_UP && (
+          <p className="text-sm text-blue-900">🚚 <strong>On the Way:</strong> Your order has been picked up and is on the way to you. Estimated arrival: ~{order.eta} minutes.</p>
+        )}
+        {order.status === OrderStatus.DELIVERED && (
+          <p className="text-sm text-green-900 bg-green-50 border-green-200">✅ <strong>Arrived:</strong> Your order has been delivered! Enjoy your meal!</p>
+        )}
+      </div>
+      )}
+
+      {userRole === 'DASHER' && order.status === OrderStatus.PICKED_UP && (
         <div className="border-t pt-4 mt-4">
           <h4 className="font-bold mb-2">Delivery Route</h4>
           <a 
