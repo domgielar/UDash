@@ -34,8 +34,9 @@ export const fetchLatestMenu = async (): Promise<ScrapedMenu> => {
     const { targetDate } = getNextAvailableGrabNGoDate();
     const dateString = targetDate.toISOString().split('T')[0];
 
-    // Use proxied endpoint - Vite dev server proxies to http://localhost:3001
-    const API_ENDPOINT = `/grabngo-menu?date=${dateString}`;
+    // Use environment variable for the backend URL (production) or fallback to localhost (development)
+    const baseUrl = (import.meta as any).env.VITE_API_URL || 'http://localhost:3001';
+    const API_ENDPOINT = `${baseUrl}/grabngo-menu?date=${dateString}`;
     
     // --- REAL API FETCH ---
     try {

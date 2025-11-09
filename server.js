@@ -6,8 +6,36 @@ import * as cheerio from "cheerio";
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// CORS configuration for production
+const allowedOrigins = [
+  'http://localhost:3000', // Local development
+  'http://localhost:3001', // Local development
+  'http://localhost:3002', // Local development
+  'http://localhost:3003', // Local development
+  'http://localhost:3004', // Local development
+  'http://localhost:3005', // Local development
+  'http://localhost:3006', // Local development
+  'http://localhost:3007', // Local development
+  'http://localhost:3008', // Local development
+  'http://localhost:3009', // Local development
+  // Add your Render frontend URL here (replace with your actual frontend URL)
+  'https://your-udash-frontend.onrender.com',
+];
+
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or Postman)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
 
 // Helper function to infer category from item name
