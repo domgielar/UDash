@@ -18,8 +18,8 @@ const allowedOrigins = [
   'http://localhost:3007', // Local development
   'http://localhost:3008', // Local development
   'http://localhost:3009', // Local development
-  // Add your Render frontend URL here (replace with your actual frontend URL)
-  'https://udash-yw1z.onrender.com',
+  // Render frontend URL
+  'https://udash-frontend.onrender.com',
 ];
 
 // Middleware
