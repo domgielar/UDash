@@ -184,6 +184,140 @@ app.get('/grabngo-menu', async (req, res) => {
     }
 });
 
+// ============= DELIVERY FEE CALCULATOR =============
+app.post('/calculate-delivery-fee', (req, res) => {
+    const { items, distance = 0.5, fromLocation, toLocation } = req.body;
+
+    // Validate input
+    if (!items || !Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ error: 'Items array is required and cannot be empty.' });
+    }
+
+    try {
+        const BASE_FEE = 2.50;
+        const ITEM_ADDON = 0.25;
+        const COMPLEX_ITEM_ADDON = 0.50;
+        const DISTANCE_ADDON = 0.50; // Per 0.25 miles
+
+        // Count items and complexity
+        let totalItems = 0;
+        let complexItemCount = 0;
+
+        items.forEach(item => {
+            totalItems += item.quantity || 1;
+            
+            // Determine complexity based on category
+            const complexCategories = ['Entrees', 'Pasta Bar', 'Grill Station', 'International', 'Bowl', 'Wrap'];
+            if (complexCategories.some(cat => item.category?.includes(cat))) {
+                complexItemCount += (item.quantity || 1);
+            }
+        });
+
+        // Calculate base fee
+        let deliveryFee = BASE_FEE;
+
+        // Add for items beyond 3
+        if (totalItems > 3) {
+            deliveryFee += (totalItems - 3) * ITEM_ADDON;
+        }
+
+        // Add for complex items
+        deliveryFee += complexItemCount * COMPLEX_ITEM_ADDON;
+
+        // Add for distance
+        const distanceAddons = Math.ceil((distance || 0.5) / 0.25);
+        deliveryFee += distanceAddons * DISTANCE_ADDON;
+
+        // Round to 2 decimal places
+        deliveryFee = Math.round(deliveryFee * 100) / 100;
+
+        res.json({
+            baseFee: BASE_FEE,
+            itemCount: totalItems,
+            complexItems: complexItemCount,
+            distance: distance || 0.5,
+            deliveryFee: deliveryFee,
+            breakdown: {
+                baseFee: BASE_FEE,
+                itemAddOn: Math.max(0, (totalItems - 3) * ITEM_ADDON),
+                complexityAddOn: complexItemCount * COMPLEX_ITEM_ADDON,
+                distanceAddOn: distanceAddons * DISTANCE_ADDON
+            }
+        });
+    } catch (error) {
+        console.error('Delivery fee calculation error:', error.message);
+        res.status(500).json({ error: 'Failed to calculate delivery fee.' });
+    }
+});
+
+// ============= ORDER PLACEMENT =============
+const orders = []; // In-memory order storage (replace with database in production)
+
+app.post('/place-order', (req, res) => {
+    const { items, deliveryFee, subtotal, total, deliveryAddress, dinerName, dinerEmail, fromLocation } = req.body;
+
+    // Validate required fields
+    if (!items || !Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ error: 'Items array is required.' });
+    }
+    if (!dinerName || !dinerEmail || !deliveryAddress) {
+        return res.status(400).json({ error: 'Diner name, email, and delivery address are required.' });
+    }
+
+    try {
+        const orderId = `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+        
+        const order = {
+            orderId: orderId,
+            timestamp: new Date().toISOString(),
+            status: 'confirmed',
+            dinerName: dinerName,
+            dinerEmail: dinerEmail,
+            deliveryAddress: deliveryAddress,
+            fromLocation: fromLocation,
+            items: items,
+            subtotal: subtotal || 0,
+            deliveryFee: deliveryFee || 0,
+            total: total || 0,
+            estimatedDelivery: new Date(Date.now() + 25 * 60000).toISOString() // ~25 minutes
+        };
+
+        orders.push(order);
+
+        console.log(`✅ Order placed: ${orderId}`);
+
+        res.status(201).json({
+            success: true,
+            order: order,
+            message: `Order confirmed! Your order will be delivered in ~25 minutes.`
+        });
+    } catch (error) {
+        console.error('Order placement error:', error.message);
+        res.status(500).json({ error: 'Failed to place order.' });
+    }
+});
+
+// ============= GET ORDER STATUS =============
+app.get('/order/:orderId', (req, res) => {
+    const { orderId } = req.params;
+
+    const order = orders.find(o => o.orderId === orderId);
+
+    if (!order) {
+        return res.status(404).json({ error: 'Order not found.' });
+    }
+
+    res.json({
+        orderId: order.orderId,
+        status: order.status,
+        estimatedDelivery: order.estimatedDelivery,
+        items: order.items,
+        total: order.total,
+        dinerName: order.dinerName,
+        deliveryAddress: order.deliveryAddress
+    });
+});
+
 app.listen(PORT, () => {
     console.log(`UDash scraper API listening on port ${PORT}`);
 });

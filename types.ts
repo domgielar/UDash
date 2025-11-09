@@ -80,3 +80,66 @@ export interface ScrapedMenu {
   source?: 'scraped' | 'mock';
   message?: string;
 }
+
+// Type for cart items (extended from menu item)
+export interface CartItemExtended {
+  name: string;
+  category: string;
+  price: number;
+  quantity: number;
+  image?: string;
+  mealPeriod?: string;
+}
+
+// Type for delivery fee calculation
+export interface DeliveryFeeRequest {
+  items: Array<{ category: string; quantity: number }>;
+  distance?: number;
+  fromLocation?: string;
+  toLocation?: string;
+}
+
+export interface DeliveryFeeResponse {
+  baseFee: number;
+  itemCount: number;
+  complexItems: number;
+  distance: number;
+  deliveryFee: number;
+  breakdown: {
+    baseFee: number;
+    itemAddOn: number;
+    complexityAddOn: number;
+    distanceAddOn: number;
+  };
+}
+
+// Type for order placement
+export interface OrderRequest {
+  items: CartItemExtended[];
+  deliveryFee: number;
+  subtotal: number;
+  total: number;
+  deliveryAddress: string;
+  dinerName: string;
+  dinerEmail: string;
+  fromLocation: string;
+}
+
+export interface OrderResponse {
+  success: boolean;
+  order: {
+    orderId: string;
+    timestamp: string;
+    status: string;
+    dinerName: string;
+    dinerEmail: string;
+    deliveryAddress: string;
+    fromLocation: string;
+    items: CartItemExtended[];
+    subtotal: number;
+    deliveryFee: number;
+    total: number;
+    estimatedDelivery: string;
+  };
+  message: string;
+}
