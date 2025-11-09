@@ -1,32 +1,26 @@
 {
-  "name": "udash-backend",
-  "version": "1.0.0",
-  "description": "Scraping backend for UDash app",
-  "main": "server.js",
+  "name": "udash---umass-food-delivery",
+  "private": true,
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
     "dev": "vite",
+    "dev:server": "node server.js",
     "build": "vite build",
     "preview": "vite preview"
   },
-  "author": "AI Studio",
-  "license": "ISC",
   "dependencies": {
+    "react-dom": "^19.2.0",
+    "react": "^19.2.0",
+    "lucide-react": "^0.553.0",
     "cheerio": "^1.0.0-rc.12",
     "cors": "^2.8.5",
-    "express": "^4.19.2",
-    "jsdom": "^23.0.1",
-    "puppeteer": "^24.29.1",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "express": "^4.19.2"
   },
   "devDependencies": {
-    "@types/node": "^24.10.0",
-    "@types/react": "^19.2.2",
-    "@types/react-dom": "^19.2.2",
-    "@vitejs/plugin-react": "^5.1.0",
-    "typescript": "^5.9.3",
-    "vite": "^7.2.2"
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
   }
 }

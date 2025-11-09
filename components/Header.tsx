@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { UserRole } from '../types';
-import { UserIcon, MotorcycleIcon } from './icons';
 
 interface HeaderProps {
   userRole: UserRole;
@@ -9,29 +8,27 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ userRole, setUserRole }) => {
-  const isCustomer = userRole === UserRole.CUSTOMER;
-
   return (
-    <header className="bg-red-800 text-white shadow-lg sticky top-0 z-20">
-      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-        <h1 className="text-2xl font-bold tracking-tight">UDash</h1>
-        <div className="flex items-center space-x-2">
-          <span className={`transition-opacity duration-300 ${isCustomer ? 'opacity-100' : 'opacity-50'}`}>
-            <UserIcon className="w-6 h-6" />
-          </span>
+    <header className="bg-umass-maroon text-white shadow-md sticky top-0 z-10">
+      <div className="container mx-auto max-w-4xl p-4 flex justify-between items-center">
+        <h1 className="text-2xl font-bold">UDash</h1>
+        <div className="hidden md:flex items-center bg-white/20 rounded-full p-1">
           <button
-            onClick={() => setUserRole(isCustomer ? UserRole.DASHER : UserRole.CUSTOMER)}
-            className="relative inline-flex items-center h-6 rounded-full w-11 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-800 focus:ring-white"
-            style={{ backgroundColor: isCustomer ? '#4ade80' : '#f87171' }}
+            onClick={() => setUserRole(UserRole.CUSTOMER)}
+            className={`px-4 py-1 text-sm font-semibold rounded-full transition-colors duration-300 ${
+              userRole === UserRole.CUSTOMER ? 'bg-white text-umass-maroon' : 'text-white'
+            }`}
           >
-            <span
-              className="inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-300"
-              style={{ transform: isCustomer ? 'translateX(2px)' : 'translateX(22px)' }}
-            />
+            I'm Hungry
           </button>
-          <span className={`transition-opacity duration-300 ${!isCustomer ? 'opacity-100' : 'opacity-50'}`}>
-            <MotorcycleIcon className="w-6 h-6" />
-          </span>
+          <button
+            onClick={() => setUserRole(UserRole.DASHER)}
+            className={`px-4 py-1 text-sm font-semibold rounded-full transition-colors duration-300 ${
+              userRole === UserRole.DASHER ? 'bg-white text-umass-maroon' : 'text-white'
+            }`}
+          >
+            I'm Dashing
+          </button>
         </div>
       </div>
     </header>

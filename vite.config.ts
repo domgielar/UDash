@@ -9,11 +9,7 @@ export default defineConfig(({ mode }) => {
         port: 3000,
         host: '0.0.0.0',
         proxy: {
-          '/grabngo-menu': {
-            target: 'http://localhost:3001',
-            changeOrigin: true,
-            rewrite: (path) => path,
-          }
+          '/grabngo-menu': 'http://localhost:3001'
         }
       },
       plugins: [react()],

@@ -1,91 +1,61 @@
 
 export enum UserRole {
-  CUSTOMER = 'Customer',
-  DASHER = 'Dasher',
+  CUSTOMER = 'CUSTOMER',
+  DASHER = 'DASHER',
 }
 
-export enum DiningHallId {
-  BLUE_WALL = 'blue-wall',
-  BERKSHIRE = 'berkshire',
-  WORCESTER = 'worcester',
-  HAMPSHIRE = 'hampshire',
-  FRANKLIN = 'franklin',
-}
-
-export enum LocationId {
-    SWELLS = 'swells',
-    OHILL = 'ohill',
-    CENTRAL = 'central',
-    SOUTHWEST = 'southwest',
-    NORTHEAST = 'northeast',
-    DUBOIS = 'dubois',
+export enum DiningHallName {
+  FRANKLIN = 'Franklin DC',
+  BERKSHIRE = 'Berkshire DC',
+  WORCESTER = 'Worcester DC',
+  HAMPSHIRE = 'Hampshire DC',
 }
 
 export interface DiningHall {
-  id: DiningHallId;
-  name: string;
-  location: { lat: number; lng: number };
-}
-
-export interface Location {
-    id: LocationId;
-    name: string;
-    location: { lat: number; lng: number };
+  name: DiningHallName;
+  location: {
+    lat: number;
+    lng: number;
+  };
 }
 
 export interface MenuItem {
   id: string;
   name: string;
-  description: string;
   price: number;
-  image: string;
-  category?: string;
+  category: string;
 }
 
-export interface CartItem extends MenuItem {
+export interface CartItem {
+  menuItem: MenuItem;
   quantity: number;
 }
 
 export enum OrderStatus {
-  PENDING = 'Pending Confirmation',
-  CONFIRMED = 'Order Confirmed',
-  AWAITING_PICKUP = 'Waiting for Dasher',
-  IN_LINE = 'Dasher is in Line',
-  PICKED_UP = 'On The Way',
-  DELIVERED = 'Delivered',
-  CANCELLED = 'Cancelled',
+    PENDING = "Order Placed",
+    ACCEPTED = "Dasher Assigned",
+    AT_HALL = "Arrived at Dining Hall",
+    IN_LINE = "In Line for Food",
+    PICKED_UP = "On The Way",
+    DELIVERED = "Delivered"
 }
 
 export interface Order {
   id: string;
-  items: CartItem[];
-  subtotal: number;
-  deliveryFee: number;
-  total: number;
-  status: OrderStatus;
+  customer: {
+    id: string;
+    location: {
+      lat: number;
+      lng: number;
+    }
+  };
+  dasherId?: string;
   diningHall: DiningHall;
-  deliveryLocation: Location;
+  items: CartItem[];
+  totalPrice: number;
+  deliveryFee: number;
+  tip: number;
   eta: number; // in minutes
-  createdAt: number;
-}
-
-// Types for the scraped menu data API
-export interface ScrapedMenuItem {
-    name: string;
-    description: string;
-    category: string;
-    price: number;
-    image: string;
-}
-
-export interface ScrapedLocationMenu {
-    name: string;
-    items: ScrapedMenuItem[];
-}
-
-export interface ScrapedMenu {
-    date: string;
-    locations: ScrapedLocationMenu[];
-    message?: string;
-    isFutureMenu?: boolean;
+  status: OrderStatus;
+  createdAt: number; // timestamp
 }

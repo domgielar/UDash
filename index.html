@@ -3,19 +3,28 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>UDash Campus Delivery</title>
+    <title>UDash - UMass Food Delivery</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'umass-maroon': '#881c1c',
+              'udash-blue': '#3b82f6',
+            },
+          },
+        },
+      }
+    </script>
   <script type="importmap">
 {
   "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "express": "https://aistudiocdn.com/express@^5.1.0",
-    "cors": "https://aistudiocdn.com/cors@^2.8.5",
-    "cheerio": "https://aistudiocdn.com/cheerio@^1.1.2"
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.553.0"
   }
 }
 </script>

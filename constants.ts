@@ -1,65 +1,55 @@
 
-import { DiningHall, DiningHallId, MenuItem, Location, LocationId } from './types';
+
+// FIX: Import `OrderStatus` from `types.ts` to resolve reference errors.
+import { DiningHall, DiningHallName, MenuItem, OrderStatus } from './types';
 
 export const DINING_HALLS: DiningHall[] = [
-  { id: DiningHallId.BLUE_WALL, name: "Blue Wall", location: { lat: 42.3906, lng: -72.5253 } },
-  { id: DiningHallId.BERKSHIRE, name: "Berkshire DC", location: { lat: 42.3958, lng: -72.5285 } },
-  { id: DiningHallId.WORCESTER, name: "Worcester DC", location: { lat: 42.3879, lng: -72.5218 } },
-  { id: DiningHallId.HAMPSHIRE, name: "Hampshire DC", location: { lat: 42.3941, lng: -72.5323 } },
-  { id: DiningHallId.FRANKLIN, name: "Franklin DC", location: { lat: 42.3872, lng: -72.5240 } },
+  { name: DiningHallName.FRANKLIN, location: { lat: 42.3892516, lng: -72.522508 } },
+  { name: DiningHallName.BERKSHIRE, location: { lat: 42.3819085, lng: -72.5299679 } },
+  { name: DiningHallName.WORCESTER, location: { lat: 42.393611330062605, lng: -72.5242175344014 } },
+  { name: DiningHallName.HAMPSHIRE, location: { lat: 42.3838499, lng: -72.530519 } },
 ];
 
-export const DELIVERY_LOCATIONS: Location[] = [
-    { id: LocationId.SWELLS, name: "Sylvan", location: { lat: 42.3900, lng: -72.5180 } },
-    { id: LocationId.OHILL, name: "Orchard Hill", location: { lat: 42.3925, lng: -72.5200 } },
-    { id: LocationId.CENTRAL, name: "Central", location: { lat: 42.3880, lng: -72.5260 } },
-    { id: LocationId.SOUTHWEST, name: "Southwest", location: { lat: 42.3835, lng: -72.5300 } },
-    { id: LocationId.NORTHEAST, name: "Northeast", location: { lat: 42.3945, lng: -72.5215 } },
-    { id: LocationId.DUBOIS, name: "W.E.B. Du Bois Library", location: { lat: 42.3908, lng: -72.5273 } },
-];
-
-export const MENUS: Record<DiningHallId, MenuItem[]> = {
-  [DiningHallId.BLUE_WALL]: [
-    { id: 'bw1', name: "Harvest Chicken Salad Wrap", description: "Grilled chicken, mixed greens, cranberries, and walnuts.", price: 8.99, image: "https://picsum.photos/seed/bw1/400", category: "Wrap" },
-    { id: 'bw2', name: "Spicy California Roll", description: "Fresh sushi with spicy mayo.", price: 9.50, image: "https://picsum.photos/seed/bw2/400", category: "Sushi" },
-    { id: 'bw3', name: "Create-Your-Own Salad", description: "Choose from a variety of fresh toppings and dressings.", price: 10.25, image: "https://picsum.photos/seed/bw3/400", category: "Salad" },
+export const MENU_DATA: Record<DiningHallName, MenuItem[]> = {
+  [DiningHallName.FRANKLIN]: [
+    { id: 'bw1', name: 'Harvest Chicken Salad Sandwich', price: 8.99, category: 'Sandwiches' },
+    { id: 'bw2', name: 'Spicy Chicken Famous Bowl', price: 10.50, category: 'Bowls' },
+    { id: 'bw3', name: 'Street Corn Chicken Tacos', price: 9.75, category: 'Tacos' },
+    { id: 'bw4', name: 'Classic Sushi Roll', price: 11.25, category: 'Sushi' },
+    { id: 'bw5', name: 'Iced Latte', price: 4.50, category: 'Drinks' },
+    { id: 'bw6', name: 'Green Smoothie', price: 6.75, category: 'Drinks' },
   ],
-  [DiningHallId.BERKSHIRE]: [
-    { id: 'b1', name: "Berkshire Burger", description: "Classic beef burger with lettuce, tomato, and cheese.", price: 9.75, image: "https://picsum.photos/seed/b1/400", category: "Grill" },
-    { id: 'b2', name: "Margherita Pizza", description: "Personal pizza with fresh mozzarella and basil.", price: 11.50, image: "https://picsum.photos/seed/b2/400", category: "Pizza" },
-    { id: 'b3', name: "Vegan Tofu Scramble", description: "Hearty tofu scramble with seasonal vegetables.", price: 8.50, image: "https://picsum.photos/seed/b3/400", category: "Vegan" },
+  [DiningHallName.BERKSHIRE]: [
+    { id: 'b1', name: 'Berkshire Burger', price: 9.50, category: 'Grill' },
+    { id: 'b2', name: 'Chicken Tenders & Fries', price: 8.75, category: 'Grill' },
+    { id: 'b3', name: 'Cheese Pizza Slice', price: 3.50, category: 'Pizza' },
+    { id: 'b4', name: 'Pepperoni Pizza Slice', price: 3.75, category: 'Pizza' },
+    { id: 'b5', name: 'Large Fountain Soda', price: 2.50, category: 'Drinks' },
+    { id: 'b6', name: 'Garden Salad', price: 6.00, category: 'Salads' },
   ],
-  [DiningHallId.WORCESTER]: [
-    { id: 'w1', name: "Street Tacos (3)", description: "Choice of carnitas, chicken, or veggie on corn tortillas.", price: 10.00, image: "https://picsum.photos/seed/w1/400", category: "Tacos" },
-    { id: 'w2', name: "Ramen Noodle Bowl", description: "Rich broth with noodles, pork belly, and a soft-boiled egg.", price: 12.00, image: "https://picsum.photos/seed/w2/400", category: "Noodles" },
-    { id: 'w3', name: "Fruit & Yogurt Parfait", description: "Layers of Greek yogurt, berries, and granola.", price: 6.50, image: "https://picsum.photos/seed/w3/400", category: "Breakfast" },
+  [DiningHallName.WORCESTER]: [
+    { id: 'w1', name: 'Stir-fry with Tofu', price: 10.25, category: 'Stir-fry' },
+    { id: 'w2', name: 'Chicken Teriyaki Bowl', price: 11.00, category: 'Bowls' },
+    { id: 'w3', name: 'Worcester Omelette', price: 7.50, category: 'Breakfast' },
+    { id: 'w4', name: 'Pancakes with Syrup', price: 6.75, category: 'Breakfast' },
+    { id: 'w5', name: 'Iced Coffee', price: 3.75, category: 'Drinks' },
+    { id: 'w6', name: 'Fruit Parfait', price: 5.50, category: 'Desserts' },
   ],
-  [DiningHallId.HAMPSHIRE]: [
-    { id: 'h1', name: "Gluten-Free Pasta", description: "Pasta with your choice of sauce and toppings.", price: 9.25, image: "https://picsum.photos/seed/h1/400", category: "Pasta" },
-    { id: 'h2', name: "Chicken Teriyaki Bowl", description: "Grilled chicken with teriyaki glaze over rice.", price: 10.75, image: "https://picsum.photos/seed/h2/400", category: "Bowl" },
-    { id: 'h3', name: "Berry Smoothie", description: "A refreshing blend of mixed berries and banana.", price: 7.00, image: "https://picsum.photos/seed/h3/400", category: "Beverage" },
-  ],
-  [DiningHallId.FRANKLIN]: [
-    { id: 'f1', name: "Franklin Philly Cheesesteak", description: "Shaved steak with peppers, onions, and provolone cheese.", price: 11.25, image: "https://picsum.photos/seed/f1/400", category: "Sandwich" },
-    { id: 'f2', name: "Custom Veggie Stir-Fry", description: "Your choice of fresh vegetables and sauce over rice.", price: 9.75, image: "https://picsum.photos/seed/f2/400", category: "Stir-fry" },
-    { id: 'f3', name: "Buffalo Chicken Wrap", description: "Crispy chicken, buffalo sauce, lettuce, and blue cheese.", price: 8.99, image: "https://picsum.photos/seed/f3/400", category: "Wrap" },
+  [DiningHallName.HAMPSHIRE]: [
+    { id: 'h1', name: 'Hampden Deli Sandwich', price: 9.25, category: 'Sandwiches' },
+    { id: 'h2', name: 'Vegan Chili Bowl', price: 8.50, category: 'Bowls' },
+    { id: 'h3', name: 'Macaroni and Cheese', price: 7.75, category: 'Comfort Food' },
+    { id: 'h4', name: 'Tomato Soup', price: 4.50, category: 'Soups' },
+    { id: 'h5', name: 'Bottled Water', price: 2.00, category: 'Drinks' },
+    { id: 'h6', name: 'Brownie', price: 3.25, category: 'Desserts' },
   ],
 };
 
-// Mock distance calculation for delivery fee and ETA
-// In a real app, this would use the Google Maps Distance Matrix API
-export const calculateDeliveryInfo = (diningHallLoc: {lat: number, lng: number}, userLoc: {lat: number, lng: number}) => {
-    const latDiff = Math.abs(diningHallLoc.lat - userLoc.lat);
-    const lngDiff = Math.abs(diningHallLoc.lng - userLoc.lng);
-    const distance = Math.sqrt(latDiff*latDiff + lngDiff*lngDiff) * 100; // A rough multiplier
-
-    const fee = 1.50 + distance * 0.5; // Base fee + per "unit" distance
-    const travelTime = Math.round(distance * 5); // 5 minutes per "unit"
-    const queueTime = 10; // Simulated 10 min wait time in the dining hall
-    const eta = queueTime + travelTime;
-
-    return {
-        fee: parseFloat(fee.toFixed(2)),
-        eta
-    };
-};
+export const ORDER_STATUS_FLOW: OrderStatus[] = [
+    OrderStatus.PENDING,
+    OrderStatus.ACCEPTED,
+    OrderStatus.AT_HALL,
+    OrderStatus.IN_LINE,
+    OrderStatus.PICKED_UP,
+    OrderStatus.DELIVERED
+];
