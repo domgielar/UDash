@@ -377,6 +377,23 @@ app.get('/order/:orderId', (req, res) => {
     });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`UDash scraper API listening on port ${PORT}`);
+});
+
+// Graceful shutdown on SIGTERM (Railway/Render sends this signal)
+process.on('SIGTERM', () => {
+    console.log('SIGTERM received, shutting down gracefully...');
+    server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
+    });
+});
+
+process.on('SIGINT', () => {
+    console.log('SIGINT received, shutting down gracefully...');
+    server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
+    });
 });
