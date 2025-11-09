@@ -33,10 +33,10 @@ export interface CartItem {
 
 export enum OrderStatus {
     PENDING = "Order",
-    ACCEPTED = "Dasher",
-    AT_HALL = "Arrived",
-    IN_LINE = "In",
-    PICKED_UP = "On",
+    ACCEPTED = "Dasher Confirmed",
+    AT_HALL = "Arrived at DC",
+    IN_LINE = "In Line",
+    PICKED_UP = "On the Way",
     DELIVERED = "Delivered"
 }
 

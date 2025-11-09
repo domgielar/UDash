@@ -39,7 +39,7 @@ const OrderTracker: React.FC<OrderTrackerProps> = ({ order, userRole, updateOrde
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
-      <div className="flex justify-between items-start mb-4">
+      <div className="flex justify-between items-start mb-6">
         <div>
           <h3 className="text-xl font-bold">Order Status</h3>
           <p className="text-sm text-gray-500">From: {order.diningHall.name}</p>
@@ -51,16 +51,58 @@ const OrderTracker: React.FC<OrderTrackerProps> = ({ order, userRole, updateOrde
         </div>
       </div>
 
-      <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+      <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
         <div 
           className="bg-green-500 h-2.5 rounded-full transition-all duration-500" 
           style={{ width: `${((currentStatusIndex + 1) / ORDER_STATUS_FLOW.length) * 100}%` }}
         ></div>
       </div>
-       <ul className="text-xs text-gray-500 flex justify-between mb-6">
+       <ul className="text-xs text-gray-500 flex justify-between mb-6 relative">
         {ORDER_STATUS_FLOW.map((status, index) => (
-            <li key={status} className={`w-1/6 text-center ${index <= currentStatusIndex ? 'font-bold text-gray-700' : ''}`}>
+            <li key={status} className="flex-1 text-center relative flex justify-center items-center whitespace-nowrap">
+              {/* Left arrow moving right at current status */}
+              {index === currentStatusIndex && (
+                <span 
+                  className="text-xs font-black select-none"
+                  style={{
+                    color: '#000000',
+                    animation: 'slide-left-right 1s infinite',
+                    minWidth: '14px',
+                    display: 'inline-block'
+                  }}
+                >
+                  →
+                </span>
+              )}
+              <span className={`inline-block px-2 ${
+                index === currentStatusIndex 
+                  ? 'font-black text-sm' 
+                  : index < currentStatusIndex 
+                  ? 'font-bold text-gray-700 text-xs' 
+                  : 'text-gray-400 text-xs'
+              }`}
+              style={index === currentStatusIndex ? {
+                color: '#3b82f6',
+                textShadow: '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, -2px 0px 0 #000, 2px 0px 0 #000, 0px -2px 0 #000, 0px 2px 0 #000'
+              } : {}}
+              >
                 {statusLabels[status]}
+              </span>
+              {/* Right arrow moving left at current status */}
+              {index === currentStatusIndex && (
+                <span 
+                  className="text-xs font-black select-none"
+                  style={{
+                    color: '#000000',
+                    animation: 'slide-right-left 1s infinite',
+                    animationDelay: '0s',
+                    minWidth: '14px',
+                    display: 'inline-block'
+                  }}
+                >
+                  ←
+                </span>
+              )}
             </li>
         ))}
       </ul>
@@ -114,6 +156,26 @@ const OrderTracker: React.FC<OrderTrackerProps> = ({ order, userRole, updateOrde
           </button>
         </div>
       )}
+
+      <style>{`
+        @keyframes slide-left-right {
+          0%, 100% {
+            transform: translateX(-6px);
+          }
+          50% {
+            transform: translateX(6px);
+          }
+        }
+        
+        @keyframes slide-right-left {
+          0%, 100% {
+            transform: translateX(6px);
+          }
+          50% {
+            transform: translateX(-6px);
+          }
+        }
+      `}</style>
     </div>
   );
 };
