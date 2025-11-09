@@ -4,7 +4,7 @@ import cors from 'cors';
 import * as cheerio from "cheerio";
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 // CORS configuration for production
 const allowedOrigins = [
@@ -18,8 +18,8 @@ const allowedOrigins = [
   'http://localhost:3007', // Local development
   'http://localhost:3008', // Local development
   'http://localhost:3009', // Local development
-  // Render frontend URL
-  'https://udash-frontend.onrender.com',
+  // Add your Render frontend URL here (replace with your actual frontend URL)
+  'https://udash-yw1z.onrender.com',
 ];
 
 // Middleware
@@ -37,6 +37,11 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+
+// Health check endpoint (platforms need this!)
+app.get('/healthz', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
 
 // Helper function to infer category from item name
 const inferCategory = (name) => {
@@ -372,9 +377,6 @@ app.get('/order/:orderId', (req, res) => {
     });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`UDash scraper API listening on port ${PORT}`);
 });
-
-// For serverless deployment
-export default app;
