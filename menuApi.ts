@@ -34,28 +34,37 @@ export const fetchLatestMenu = async (): Promise<ScrapedMenu> => {
     const { targetDate } = getNextAvailableGrabNGoDate();
     const dateString = targetDate.toISOString().split('T')[0];
 
-    // TODO: Replace this URL with your actual deployed backend endpoint.
-    // Example: https://udash-api.onrender.com/grabngo-menu
-    const API_ENDPOINT = `https://udash-e7ux.onrender.com/grabngo-menu?date=${dateString}`;
+    // Use proxied endpoint - Vite dev server proxies to http://localhost:3001
+    const API_ENDPOINT = `/grabngo-menu?date=${dateString}`;
     
     // --- REAL API FETCH ---
-    // This is now active. It will fail until you deploy the backend and update the URL above.
     try {
         console.log(`Fetching menu data for ${dateString} from ${API_ENDPOINT}...`);
 
-        if (API_ENDPOINT.includes('<your-backend-endpoint>')) {
-             throw new Error("API endpoint is not configured. Please deploy the backend and update the API_ENDPOINT URL in `menuApi.ts`.");
-        }
-
-        const response = await fetch(API_ENDPOINT);
+        const response = await fetch(API_ENDPOINT, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        
         if (!response.ok) {
-            throw new Error(`Failed to fetch menu. Status: ${response.status}`);
+            throw new Error(`Failed to fetch menu. Status: ${response.status} ${response.statusText}`);
         }
+        
         const data = await response.json();
         console.log("Menu data fetched successfully:", data);
+        
+        // Ensure data has the expected structure
+        if (!data.locations || !Array.isArray(data.locations)) {
+            throw new Error("Invalid menu data structure from backend");
+        }
+        
         return data; // Trust the response from the backend
     } catch (error) {
         console.error("API fetch failed:", error);
+        // Log more details for debugging
+        console.error("Error type:", error instanceof Error ? error.message : typeof error);
         throw error; // Re-throw to be caught by the UI component for fallback
     }
 };

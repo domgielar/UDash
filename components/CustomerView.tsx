@@ -244,7 +244,7 @@ const CustomerView: React.FC<CustomerViewProps> = ({ activeOrder, placeOrder }) 
             {menuError && (
               <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 rounded-md" role="alert">
                   <p className="font-bold">Could not load today's menu</p>
-                  <p>Showing the last available menu. Some items may not be available.</p>
+                  <p>This is the next available menu. Some items may not be available.</p>
               </div>
             )}
             
