@@ -2,6 +2,7 @@
 import express from 'express';
 import cors from 'cors';
 import * as cheerio from "cheerio";
+import axios from 'axios';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -134,24 +135,31 @@ app.get('/grabngo-menu', async (req, res) => {
 
         const allLocations = [];
 
-        for (const hall of diningHalls) {
+    const upstreamErrors = [];
+    for (const hall of diningHalls) {
             // Build canonical menu URL for this location
             const menuUrl = `https://umassdining.com/locations-menus/${hall.slug}/menu`;
             console.log(`Fetching: ${menuUrl}`);
             
             try {
-                const response = await fetch(menuUrl, {
+                // Use axios with realistic headers and a timeout to avoid being blocked by upstream
+                const response = await axios.get(menuUrl, {
                     headers: {
-                        'User-Agent': 'Mozilla/5.0 (compatible; UMass-Dining-Scraper/1.0)'
-                    }
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                        'Referer': 'https://umassdining.com/',
+                    },
+                    timeout: 15000,
+                    responseType: 'text'
                 });
-                
-                if (!response.ok) {
-                    console.warn(`HTTP ${response.status} for ${menuUrl}`);
+
+                if (response.status < 200 || response.status >= 300) {
+                    console.warn(`Upstream HTTP ${response.status} for ${menuUrl}`);
+                    upstreamErrors.push({ url: menuUrl, status: response.status });
                     continue;
                 }
 
-                const html = await response.text();
+                const html = response.data;
                 const $ = cheerio.load(html);
 
                 // Find the main dining menu container and extract categories + items in order
@@ -191,44 +199,37 @@ app.get('/grabngo-menu', async (req, res) => {
                     });
                     console.log(`Found ${items.length} items for ${hall.name}`);
                 } else {
-                    console.log(`No items found for ${hall.name} - this may indicate a scraping issue`);
+                    console.log(`No items found for ${hall.name} - this may indicate no menu data for that date or a scraping selector mismatch`);
                 }
             } catch (error) {
-                console.error(`Error scraping ${hall.name}: ${error.message}`);
+                const msg = error?.message || String(error);
+                console.error(`Error scraping ${hall.name}:`, msg);
+                if (error?.response?.status) {
+                    upstreamErrors.push({ url: menuUrl, status: error.response.status });
+                } else {
+                    upstreamErrors.push({ url: menuUrl, status: 'network/error', message: msg });
+                }
                 continue;
             }
         }
-
         if (allLocations.length > 0) {
-            res.json({
+            return res.json({
                 date: requestedDate,
                 locations: allLocations,
                 isFutureMenu: requestedDate !== initialDate, // True if we had to skip to a different date
                 source: 'scraped'
             });
-        } else {
-            console.log('Scraping failed or no items found. Using mock data as fallback.');
-            
-            // Fallback to mock data
-            const mockLocations = diningHalls.map(hall => ({
-                name: hall.name,
-                items: [
-                    { name: 'Grilled Chicken Breast', category: 'Grill Station', price: 8.99, image: 'https://picsum.photos/seed/chicken/400' },
-                    { name: 'Vegetable Stir Fry', category: 'International', price: 9.49, image: 'https://picsum.photos/seed/stirfry/400' },
-                    { name: 'Baked Ziti', category: 'Pasta Bar', price: 8.49, image: 'https://picsum.photos/seed/ziti/400' },
-                    { name: 'Roasted Sweet Potato', category: 'Starches', price: 3.99, image: 'https://picsum.photos/seed/potato/400' },
-                    { name: 'Caesar Salad', category: 'Salad Bar', price: 6.99, image: 'https://picsum.photos/seed/salad/400' },
-                ]
-            }));
-
-            res.status(206).json({
-                date: requestedDate,
-                isFutureMenu: requestedDate !== initialDate,
-                locations: mockLocations,
-                message: "Could not load today's menu. This is the next available menu. Some items may not be available.",
-                source: 'mock'
-            });
         }
+
+        // If upstream errors occurred and no locations were parsed, return 502 to indicate upstream failure
+        if (upstreamErrors.length > 0) {
+            console.error('Upstream errors during scraping:', upstreamErrors);
+            return res.status(502).json({ error: 'Upstream error fetching menus', details: upstreamErrors });
+        }
+
+        // No items found and no upstream errors → likely out-of-range date (no menu available)
+        console.log('No menu items found for requested date; returning 404');
+        return res.status(404).json({ error: 'No menu available for requested date' });
 
     } catch (error) {
         console.error('Scraping failed:', error.message);
