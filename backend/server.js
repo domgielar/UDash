@@ -21,8 +21,9 @@ const allowedOrigins = [
   'http://localhost:3009', // Local development
   // Add your Render frontend URL here (replace with your actual frontend URL)
     'https://udash-yw1z.onrender.com',
-    // frontend production domains
+    // frontend production domains (both with and without www)
     'https://www.udash.tech',
+    'https://udash.tech',
     'https://udash-backend.onrender.com',
 ];
 
