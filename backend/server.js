@@ -19,7 +19,10 @@ const allowedOrigins = [
   'http://localhost:3008', // Local development
   'http://localhost:3009', // Local development
   // Add your Render frontend URL here (replace with your actual frontend URL)
-  'https://udash-yw1z.onrender.com',
+    'https://udash-yw1z.onrender.com',
+    // frontend production domains
+    'https://www.udash.tech',
+    'https://udash-backend.onrender.com',
 ];
 
 // Middleware
@@ -119,25 +122,21 @@ app.get('/grabngo-menu', async (req, res) => {
         const requestedDate = currentDate.toISOString().split('T')[0];
         console.log(`Scraping for date: ${requestedDate}`);
         
-        // Define ALL dining locations to scrape (all dining commons and grab-n-go)
+        // Dining locations to scrape. Use the canonical /locations-menus/{slug}/menu pages.
+        // The site uses slugs like 'berkshire', 'worcester', 'franklin', 'hampshire' and a generic 'grab-n-go'.
         const diningHalls = [
             { name: 'Berkshire DC', slug: 'berkshire' },
             { name: 'Worcester DC', slug: 'worcester' },
             { name: 'Franklin DC', slug: 'franklin' },
             { name: 'Hampshire DC', slug: 'hampshire' },
-            { name: 'Berkshire Grab \'N Go', slug: 'berkshire-grab-n-go-menu', isGrabNGo: true },
-            { name: 'Worcester Grab \'N Go', slug: 'worcester-grab-n-go', isGrabNGo: true },
-            { name: 'Franklin Grab \'N Go', slug: 'franklin-grab-n-go', isGrabNGo: true },
-            { name: 'Hampshire Grab \'N Go', slug: 'hampshire-grab-n-go', isGrabNGo: true },
+            { name: 'Grab N Go (Campus)', slug: 'grab-n-go' },
         ];
 
         const allLocations = [];
 
         for (const hall of diningHalls) {
-            // Build appropriate URL based on location type
-            const menuUrl = hall.isGrabNGo 
-                ? `https://umassdining.com/menu/${hall.slug}`
-                : `https://umassdining.com/locations-menus/${hall.slug}/menu`;
+            // Build canonical menu URL for this location
+            const menuUrl = `https://umassdining.com/locations-menus/${hall.slug}/menu`;
             console.log(`Fetching: ${menuUrl}`);
             
             try {
@@ -155,48 +154,35 @@ app.get('/grabngo-menu', async (req, res) => {
                 const html = await response.text();
                 const $ = cheerio.load(html);
 
+                // Find the main dining menu container and extract categories + items in order
+                const menuContainer = $('#dining_menu');
+                const items = [];
                 let currentCategory = 'Entrees';
-                let currentMealPeriod = 'Lunch'; // Track if it's Lunch or Dinner
-                
-                // Parse lunch and dinner sections separately
-                const lunchSection = $('#lunch_menu');
-                const dinnerSection = $('#dinner_menu');
-                
-                // Helper function to extract items from a section
-                const extractItemsFromSection = (section, mealPeriod) => {
-                    const sectionItems = [];
-                    let sectionCategory = 'Entrees';
-                    
-                    section.find('h2.menu_category_name, li.lightbox-nutrition').each((i, el) => {
-                        if ($(el).is('h2')) {
-                            sectionCategory = $(el).text().trim() || 'Entrees';
-                        } else if ($(el).is('li')) {
-                            const link = $(el).find('a');
-                            const dishName = link.attr('data-dish-name');
-                            const calories = link.attr('data-calories');
-                            
-                            if (dishName && dishName.trim()) {
-                                sectionItems.push({
-                                    name: dishName.trim(),
-                                    description: '',
-                                    category: sectionCategory,
-                                    mealPeriod: mealPeriod,
-                                    price: getPriceByCategory(sectionCategory),
-                                    calories: calories || 'N/A',
-                                    image: `https://picsum.photos/seed/${dishName.replace(/\s+/g, '-')}/400`
-                                });
-                            }
+
+                // Iterate over category headers and item list elements in order
+                menuContainer.find('h2.menu_category_name, li.lightbox-nutrition').each((i, el) => {
+                    const tag = el.tagName.toLowerCase();
+                    if (tag === 'h2') {
+                        const catText = $(el).text().trim();
+                        if (catText) currentCategory = catText;
+                    } else if (tag === 'li') {
+                        const link = $(el).find('a');
+                        const dishName = link.attr('data-dish-name') || link.text();
+                        const calories = link.attr('data-calories') || 'N/A';
+
+                        if (dishName && dishName.trim()) {
+                            items.push({
+                                name: dishName.trim(),
+                                description: '',
+                                category: currentCategory || 'Entrees',
+                                mealPeriod: 'Lunch/Dinner',
+                                price: getPriceByCategory(currentCategory || ''),
+                                calories: calories,
+                                image: `https://picsum.photos/seed/${encodeURIComponent(dishName.trim().replace(/\s+/g, '-'))}/400`
+                            });
                         }
-                    });
-                    return sectionItems;
-                };
-                
-                // Extract lunch items
-                const lunchItems = extractItemsFromSection(lunchSection.length > 0 ? lunchSection : $('body'), 'Lunch');
-                // Extract dinner items
-                const dinnerItems = extractItemsFromSection(dinnerSection.length > 0 ? dinnerSection : $('body'), 'Dinner');
-                
-                const items = [...lunchItems, ...dinnerItems];
+                    }
+                });
 
                 if (items.length > 0) {
                     allLocations.push({
