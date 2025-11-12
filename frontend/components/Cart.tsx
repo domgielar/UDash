@@ -4,6 +4,7 @@ import { CartItem, Order, DiningHall, OrderStatus } from '../types';
 import useGeolocation from '../hooks/useGeolocation';
 import { calculateDistance, calculateDeliveryFee, calculateETA } from '../services/locationService';
 import { Plus, Minus, CreditCard, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { API_ENDPOINTS } from '../config/api';
 
 interface CartProps {
   cart: CartItem[];
@@ -54,7 +55,7 @@ const Cart: React.FC<CartProps> = ({ cart, onAddToCart, onRemoveFromCart, onPlac
         quantity: item.quantity
       }));
 
-      const response = await fetch('http://localhost:3001/calculate-delivery-fee', {
+      const response = await fetch(API_ENDPOINTS.CALCULATE_DELIVERY_FEE, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -111,7 +112,7 @@ const Cart: React.FC<CartProps> = ({ cart, onAddToCart, onRemoveFromCart, onPlac
         image: item.menuItem.id
       }));
 
-      const response = await fetch('http://localhost:3001/place-order', {
+      const response = await fetch(API_ENDPOINTS.PLACE_ORDER, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

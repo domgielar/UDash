@@ -4,7 +4,7 @@
  */
 
 // Get the API base URL from environment variable or default to localhost
-const getApiBaseUrl = (): string => {
+const getApiBaseUrl = (): string | undefined => {
   // In production (Render), VITE_API_URL environment variable is set via Vite
   // Access it through window object at runtime
   const apiUrl = (window as any).__VITE_API_URL__ || 
@@ -14,9 +14,12 @@ const getApiBaseUrl = (): string => {
     return apiUrl;
   }
   
-  // Default to local development (Vite proxy will handle routing to backend)
-  // If no VITE_API_URL is provided (e.g. deployed without env var),
-  // fall back to the known deployed backend URL so production will work.
+  // In development mode, return undefined to use relative paths (Vite proxy handles routing)
+  if (import.meta.env.DEV || import.meta.env.MODE === 'development') {
+    return undefined;
+  }
+  
+  // In production without VITE_API_URL set, fall back to the known deployed backend URL
   // NOTE: It's still best practice to set VITE_API_URL in your deployment.
   return 'https://udash-backend.onrender.com';
 };

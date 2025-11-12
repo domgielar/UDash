@@ -2,6 +2,7 @@
 // It's now configured to connect to your real backend scraper.
 
 import type { ScrapedMenu } from './types';
+import { API_ENDPOINTS } from './config/api';
 
 /**
  * Calculates the next available Grab & Go date.
@@ -34,8 +35,8 @@ export const fetchLatestMenu = async (): Promise<ScrapedMenu> => {
     const { targetDate } = getNextAvailableGrabNGoDate();
     const dateString = targetDate.toISOString().split('T')[0];
 
-    // Use the Vite proxy path instead of direct backend URL
-    const API_ENDPOINT = `/grabngo-menu?date=${dateString}`;
+    // Use the API configuration which handles both dev (proxy) and prod (direct URL)
+    const API_ENDPOINT = API_ENDPOINTS.GET_MENU(dateString);
     
     // --- REAL API FETCH ---
     try {
