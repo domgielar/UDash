@@ -99,29 +99,13 @@ const getComplexityWeight = (price) => {
 
 // The scraping endpoint - now handles real menu pages
 app.get('/grabngo-menu', async (req, res) => {
-    let { date: initialDate } = req.query;
-    if (!initialDate || !/^\d{4}-\d{2}-\d{2}$/.test(initialDate)) {
-        return res.status(400).json({ error: 'A valid date query parameter (YYYY-MM-DD) is required.' });
-    }
-
+    // NOTE: ignore any date provided by the client. The upstream menu pages show today's/current menu.
+    // We intentionally do not rely on date parameters or attempt to fetch future dates.
+    // Preserve an informational requestedDate for responses (use current date).
+    const requestedDate = new Date().toISOString().split('T')[0];
     try {
-        console.log(`Scraping requested for date: ${initialDate}`);
         
-        // Parse the date and check if it's a weekend
-        let currentDate = new Date(initialDate + 'T12:00:00Z');
-        const dayOfWeek = currentDate.getUTCDay(); // 0 = Sunday, 6 = Saturday
-        
-        // If weekend, skip to next Monday
-        if (dayOfWeek === 6) { // Saturday
-            currentDate.setUTCDate(currentDate.getUTCDate() + 2);
-            console.log(`Original date was Saturday, moving to Monday`);
-        } else if (dayOfWeek === 0) { // Sunday
-            currentDate.setUTCDate(currentDate.getUTCDate() + 1);
-            console.log(`Original date was Sunday, moving to Monday`);
-        }
-        
-        const requestedDate = currentDate.toISOString().split('T')[0];
-        console.log(`Scraping for date: ${requestedDate}`);
+        console.log(`Scraping menus (ignoring client date; using current date ${requestedDate})`);
         
         // Dining locations to scrape. Use the canonical /locations-menus/{slug}/menu pages.
         // The site uses slugs like 'berkshire', 'worcester', 'franklin', 'hampshire' and a generic 'grab-n-go'.
@@ -216,7 +200,7 @@ app.get('/grabngo-menu', async (req, res) => {
             return res.json({
                 date: requestedDate,
                 locations: allLocations,
-                isFutureMenu: requestedDate !== initialDate, // True if we had to skip to a different date
+                isFutureMenu: false,
                 source: 'scraped'
             });
         }
@@ -227,9 +211,9 @@ app.get('/grabngo-menu', async (req, res) => {
             return res.status(502).json({ error: 'Upstream error fetching menus', details: upstreamErrors });
         }
 
-        // No items found and no upstream errors → likely out-of-range date (no menu available)
-        console.log('No menu items found for requested date; returning 404');
-        return res.status(404).json({ error: 'No menu available for requested date' });
+    // No items found and no upstream errors → return an empty locations array (no menu available)
+    console.log('No menu items found for requested date; returning empty result');
+    return res.json({ date: requestedDate, locations: [], isFutureMenu: false, message: 'No menu items found' });
 
     } catch (error) {
         console.error('Scraping failed:', error.message);
