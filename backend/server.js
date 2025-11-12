@@ -352,21 +352,28 @@ app.get('/order/:orderId', (req, res) => {
 // Serve static files from the Vite dist folder (frontend build)
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-app.use(express.static(join(__dirname, 'dist')));
+// Serve static files from the Vite dist folder (frontend build) IF it exists.
+const distPath = join(__dirname, 'dist');
+if (fs.existsSync(distPath)) {
+    app.use(express.static(distPath));
 
-// Catch-all route to serve index.html for SPA routing
-app.get('*', (req, res, next) => {
-    // Skip API routes
-    if (req.path.startsWith('/grabngo-menu') || req.path.startsWith('/healthz')) {
-        return next();
-    }
-    // Serve index.html for all other routes (SPA routing)
-    res.sendFile(join(__dirname, 'dist', 'index.html'));
-});
+    // Catch-all route to serve index.html for SPA routing
+    app.get('*', (req, res, next) => {
+        // Skip API routes
+        if (req.path.startsWith('/grabngo-menu') || req.path.startsWith('/healthz') || req.path.startsWith('/order') || req.path.startsWith('/calculate-delivery-fee')) {
+            return next();
+        }
+        // Serve index.html for all other routes (SPA routing)
+        res.sendFile(join(distPath, 'index.html'));
+    });
+} else {
+    console.log(`Static frontend not found at ${distPath}; skipping static file serving.`);
+}
 
 const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`UDash scraper API listening on port ${PORT}`);
